@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ក្រាបអន្តរកម្ម៖ ពីបម្រែបម្រួលមធ្យមទៅដេរីវេ</title>
+
+    <!-- កំណត់ MathJax សម្រាប់រូបមន្តគណិតវិទ្យា -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body {
+            font-family: 'Khmer OS Battambang', 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 950px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2980b9;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+
+        .description {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #34495e;
+            text-align: justify;
+        }
+
+        .layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 320px;
+            background: #fdfefe;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dcdde1;
+        }
+
+        .graph-area {
+            flex: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg {
+            background-color: #fff;
+            border: 1px solid #bdc3c7;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* SVG Elements */
+        .axis { stroke: #2c3e50; stroke-width: 2; }
+        .grid { stroke: #ecf0f1; stroke-width: 1; }
+        .axis-num { font-size: 12px; fill: #7f8c8d; font-family: sans-serif; user-select: none; }
+        .curve { stroke: #3498db; stroke-width: 3; fill: none; }
+        .secant { stroke: #e74c3c; stroke-width: 2; transition: all 0.1s linear;}
+        /* បន្ទាត់ប៉ះដាច់ៗ */
+        .tangent { stroke: #2ecc71; stroke-width: 2; stroke-dasharray: 6,4; }
+        
+        .point-p { fill: #2ecc71; stroke: #fff; stroke-width: 2; }
+        .point-q { fill: #e74c3c; stroke: #fff; stroke-width: 2; transition: all 0.1s linear;}
+        .dashed-delta { stroke: #95a5a6; stroke-width: 1.5; stroke-dasharray: 4,4; }
+        
+        .label { font-size: 14px; font-weight: bold; font-family: sans-serif; user-select: none; }
+        .label-dx { fill: #e67e22; }
+        .label-dy { fill: #9b59b6; }
+
+        /* Slider */
+        input[type=range] {
+            width: 100%;
+            margin: 15px 0;
+            cursor: pointer;
+            accent-color: #3498db;
+        }
+
+        .dynamic-val {
+            font-weight: bold;
+            color: #e74c3c;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #e8f8f5;
+            border-left: 5px solid #1abc9c;
+            color: #16a085;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>📈 បម្រែបម្រួលមធ្យម និង និយមន័យដេរីវេ</h2>
+        
+        <div class="description">
+            អនុគមន៍បច្ចុប្បន្ន៖ $f(x) = \frac{1}{4}x^2 + 1$ ។ យើងមានចំណុចនឹង $P(2, 2)$ និងចំណុចផ្លាស់ទី $Q(2+h, f(2+h))$។ <br>
+            <strong>បម្រែបម្រួលមធ្យម</strong> គឺមេគុណប្រាប់ទិសនៃបន្ទាត់ខ្នាត់ $PQ$ ៖ $$m_{PQ} = \frac{\Delta y}{\Delta x} = \frac{f(2+h) - f(2)}{h}$$ 
+            នៅពេលយើងរំកិល $Q$ ឱ្យខិតជិត $P$ ខ្លាំង ($h \to 0$) នោះបន្ទាត់ខ្នាត់នឹងត្រួតស៊ីគ្នាជាមួយ <span style="color:#2ecc71; font-weight:bold;">បន្ទាត់ប៉ះដាច់ៗ</span> ដែលជា <strong>ដេរីវេ</strong> ត្រង់ $x=2$។
+        </div>
+
+        <div class="layout">
+            <!-- ផ្ទាំងបញ្ជា (Controls) -->
+            <div class="controls">
+                <label for="h-slider"><strong>អូសដើម្បីបន្ថយតម្លៃ $h$ (ឬ $\Delta x$)៖</strong></label>
+                <input type="range" id="h-slider" min="0" max="6" step="0.01" value="4">
+                
+                <div style="margin-top: 15px; font-size: 16px;">
+                    <div>$\Delta x = h =$ <span id="val-dx" class="dynamic-val" style="color:#e67e22;">4.00</span></div>
+                    <div style="margin-top: 10px;">$\Delta y = f(2+h) - f(2) =$ <span id="val-dy" class="dynamic-val" style="color:#9b59b6;">5.00</span></div>
+                    <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+                    <div><strong>មេគុណប្រាប់ទិសបន្ទាត់ខ្នាត់៖</strong></div>
+                    <div style="margin-top: 10px; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+                        <div>$\frac{\Delta y}{\Delta x} =$ <span id="val-slope" class="dynamic-val" style="color:#e74c3c;">1.25</span></div>
+                        <div id="tangent-label" style="display:none; color:#2ecc71; font-size:16px;">$= f'(2)$ (ដេរីវេ)</div>
+                    </div>
+                </div>
+
+                <!-- ប្រើ Pre-rendered MathJax ជំនួសឱ្យការប្រើ innerHTML បញ្ចូលថ្មី -->
+                <div class="status-box" id="status-box">
+                    <div id="msg-sliding" style="display: block;">
+                        🔍 អូសរង្វិលឱ្យ $h$ ខិតជិត $0$ ដើម្បីមើលបន្ទាត់ខ្នាត់ខិតទៅរក <strong>បន្ទាត់ប៉ះ</strong>។
+                    </div>
+                    <div id="msg-limit" style="display: none;">
+                        🎯 <strong>អស្ចារ្យ!</strong> នៅពេល $h = 0$ បន្ទាត់ខ្នាត់ត្រួតស៊ីគ្នាជាមួយ <strong>បន្ទាត់ប៉ះ</strong>។<br>មេគុណប្រាប់ទិសវាពេលនេះគឺស្មើនឹងតម្លៃ <strong>ដេរីវេ $f'(2) = 1$</strong> ។
+                    </div>
+                </div>
+            </div>
+
+            <!-- ផ្ទាំងក្រាប (SVG Graph) -->
+            <div class="graph-area">
+                <svg width="450" height="420" id="math-svg">
+                    <!-- Grid Lines -->
+                    <g id="grid-group"></g>
+                    
+                    <!-- អ័ក្ស X និង Y -->
+                    <line id="axis-x" x1="30" y1="370" x2="430" y2="370" class="axis" />
+                    <line id="axis-y" x1="40" y1="380" x2="40" y2="20" class="axis" />
+                    <text x="435" y="375" class="label">x</text>
+                    <text x="25" y="15" class="label">y</text>
+
+                    <!-- លេខលើអ័ក្ស (Axis Numbers) -->
+                    <g id="axis-labels"></g>
+
+                    <!-- ខ្សែកោង f(x) -->
+                    <path id="curve" class="curve" d="" />
+                    
+                    <!-- បន្ទាត់ប៉ះ (Tangent Line - ដាច់ៗ) ឱ្យលេចឡើងរហូត -->
+                    <line id="tangent-line" class="tangent" x1="0" y1="0" x2="0" y2="0" />
+
+                    <!-- ត្រីកោណ Delta X និង Delta Y -->
+                    <line id="line-dx" class="dashed-delta" x1="0" y1="0" x2="0" y2="0" />
+                    <line id="line-dy" class="dashed-delta" x1="0" y1="0" x2="0" y2="0" />
+                    <text id="text-dx" class="label label-dx" x="0" y="0">Δx</text>
+                    <text id="text-dy" class="label label-dy" x="0" y="0">Δy</text>
+
+                    <!-- បន្ទាត់ខ្នាត់ (Secant) -->
+                    <line id="secant-line" class="secant" x1="0" y1="0" x2="0" y2="0" />
+
+                    <!-- ចំណុច P និង Q -->
+                    <circle id="point-p" class="point-p" cx="0" cy="0" r="6" />
+                    <text id="text-p" class="label" x="0" y="0" fill="#27ae60">P(2,2)</text>
+                    
+                    <circle id="point-q" class="point-q" cx="0" cy="0" r="6" />
+                    <text id="text-q" class="label" x="0" y="0" fill="#c0392b">Q</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // អនុគមន៍ f(x) = 0.25 * x^2 + 1
+        const f = (x) => 0.25 * x * x + 1;
+
+        // កំណត់ទំហំក្រាប និង Scale
+        const svgWidth = 450;
+        const svgHeight = 420;
+        const padding = 40;
+        
+        const xMin = 0, xMax = 10;
+        const yMin = 0, yMax = 9;
+
+        // បំប្លែងកូអរដោណេគណិត ទៅកូអរដោណេ SVG
+        const mapX = (x) => padding + (x - xMin) * (svgWidth - 2 * padding) / (xMax - xMin);
+        const mapY = (y) => svgHeight - padding - (y - yMin) * (svgHeight - 2 * padding) / (yMax - yMin);
+
+        // គូរ Grid និងលេខលើអ័ក្ស
+        const gridGroup = document.getElementById('grid-group');
+        const axisLabels = document.getElementById('axis-labels');
+
+        // កំណត់ទីតាំងអ័ក្ស X ឱ្យត្រឹម y=0 និងអ័ក្ស Y ត្រឹម x=0
+        document.getElementById('axis-x').setAttribute('y1', mapY(0));
+        document.getElementById('axis-x').setAttribute('y2', mapY(0));
+        document.getElementById('axis-y').setAttribute('x1', mapX(0));
+        document.getElementById('axis-y').setAttribute('x2', mapX(0));
+
+        // លេខលើអ័ក្ស Y និងបន្ទាត់ Grid
+        for(let i=1; i<=yMax; i++) {
+            let lineY = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            lineY.setAttribute("x1", mapX(xMin)); lineY.setAttribute("y1", mapY(i));
+            lineY.setAttribute("x2", mapX(xMax)); lineY.setAttribute("y2", mapY(i));
+            lineY.setAttribute("class", "grid");
+            gridGroup.appendChild(lineY);
+
+            let textY = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textY.setAttribute("x", mapX(0) - 15);
+            textY.setAttribute("y", mapY(i) + 4);
+            textY.setAttribute("class", "axis-num");
+            textY.setAttribute("text-anchor", "end");
+            textY.textContent = i;
+            axisLabels.appendChild(textY);
+        }
+
+        // លេខលើអ័ក្ស X និងបន្ទាត់ Grid
+        for(let i=1; i<=xMax; i++) {
+            let lineX = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            lineX.setAttribute("x1", mapX(i)); lineX.setAttribute("y1", mapY(yMin));
+            lineX.setAttribute("x2", mapX(i)); lineX.setAttribute("y2", mapY(yMax));
+            lineX.setAttribute("class", "grid");
+            gridGroup.appendChild(lineX);
+
+            let textX = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            textX.setAttribute("x", mapX(i));
+            textX.setAttribute("y", mapY(0) + 20);
+            textX.setAttribute("class", "axis-num");
+            textX.setAttribute("text-anchor", "middle");
+            textX.textContent = i;
+            axisLabels.appendChild(textX);
+        }
+        
+        // លេខ 0 ត្រង់គល់អ័ក្ស
+        let text0 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text0.setAttribute("x", mapX(0) - 10);
+        text0.setAttribute("y", mapY(0) + 18);
+        text0.setAttribute("class", "axis-num");
+        text0.setAttribute("text-anchor", "end");
+        text0.textContent = "0";
+        axisLabels.appendChild(text0);
+
+        // គូរខ្សែកោង
+        let d = `M ${mapX(0)} ${mapY(f(0))}`;
+        for(let x=0.1; x<=xMax; x+=0.1) {
+            d += ` L ${mapX(x)} ${mapY(f(x))}`;
+        }
+        document.getElementById('curve').setAttribute('d', d);
+
+        // ចំណុច P ថេរ (x=2)
+        const pX = 2;
+        const pY = f(pX);
+        const svgPx = mapX(pX);
+        const svgPy = mapY(pY);
+        
+        document.getElementById('point-p').setAttribute('cx', svgPx);
+        document.getElementById('point-p').setAttribute('cy', svgPy);
+        document.getElementById('text-p').setAttribute('x', svgPx - 45);
+        document.getElementById('text-p').setAttribute('y', svgPy - 10);
+
+        // គូរបន្ទាត់ប៉ះ (Tangent Line: y = x ព្រោះ f'(2) = 1) ទុកជាគោលដៅ
+        const tangentLine = document.getElementById('tangent-line');
+        tangentLine.setAttribute('x1', mapX(0));
+        tangentLine.setAttribute('y1', mapY(0));
+        tangentLine.setAttribute('x2', mapX(9)); // គូរត្រឹម x=9, y=9 ឱ្យសមនឹងក្រាប
+        tangentLine.setAttribute('y2', mapY(9));
+
+        // Elements
+        const slider = document.getElementById('h-slider');
+        const pointQ = document.getElementById('point-q');
+        const textQ = document.getElementById('text-q');
+        const secantLine = document.getElementById('secant-line');
+        const lineDx = document.getElementById('line-dx');
+        const lineDy = document.getElementById('line-dy');
+        const textDx = document.getElementById('text-dx');
+        const textDy = document.getElementById('text-dy');
+        
+        const valDx = document.getElementById('val-dx');
+        const valDy = document.getElementById('val-dy');
+        const valSlope = document.getElementById('val-slope');
+        
+        const statusBox = document.getElementById('status-box');
+        const msgSliding = document.getElementById('msg-sliding');
+        const msgLimit = document.getElementById('msg-limit');
+        const tangentLabel = document.getElementById('tangent-label');
+
+        function updateGraph() {
+            let h = parseFloat(slider.value);
+            
+            // កំណត់ដែន Limit បើ h ខិតជិត 0 ពេក ចាត់ទុកថាស្មើ 0
+            let isLimit = false;
+            if(h < 0.05) {
+                h = 0;
+                isLimit = true;
+            }
+
+            const qX = pX + h;
+            const qY = f(qX);
+            const svgQx = mapX(qX);
+            const svgQy = mapY(qY);
+
+            // អាប់ដេត Q
+            pointQ.setAttribute('cx', svgQx);
+            pointQ.setAttribute('cy', svgQy);
+            textQ.setAttribute('x', svgQx + 10);
+            textQ.setAttribute('y', svgQy - 10);
+
+            if(isLimit) {
+                // នៅពេល h = 0 
+                pointQ.style.opacity = "0";
+                textQ.style.opacity = "0";
+                lineDx.style.opacity = "0";
+                lineDy.style.opacity = "0";
+                textDx.style.opacity = "0";
+                textDy.style.opacity = "0";
+                secantLine.style.opacity = "0"; // លាក់បន្ទាត់ខ្នាត់ព្រោះវាស៊ីគ្នានឹងបន្ទាត់ប៉ះហើយ
+
+                valDx.innerText = "0.00";
+                valDy.innerText = "0.00";
+                valSlope.innerText = "1.00";
+                valSlope.style.color = "#2ecc71";
+                tangentLabel.style.display = "block";
+                
+                // ប្តូរផ្ទាំងសារ ដោយប្រើប្រាស់កូដដែល Render រួចជាស្រេច
+                msgSliding.style.display = "none";
+                msgLimit.style.display = "block";
+                statusBox.style.borderColor = "#2ecc71";
+                statusBox.style.backgroundColor = "#eafaf1";
+
+            } else {
+                // នៅពេល h > 0 បង្ហាញបន្ទាត់ខ្នាត់ និង Delta
+                pointQ.style.opacity = "1";
+                textQ.style.opacity = "1";
+                lineDx.style.opacity = "1";
+                lineDy.style.opacity = "1";
+                textDx.style.opacity = "1";
+                textDy.style.opacity = "1";
+                secantLine.style.opacity = "1";
+
+                valSlope.style.color = "#e74c3c";
+                tangentLabel.style.display = "none";
+
+                // គូរត្រីកោណ Delta
+                lineDx.setAttribute('x1', svgPx); lineDx.setAttribute('y1', svgPy);
+                lineDx.setAttribute('x2', svgQx); lineDx.setAttribute('y2', svgPy);
+                
+                lineDy.setAttribute('x1', svgQx); lineDy.setAttribute('y1', svgPy);
+                lineDy.setAttribute('x2', svgQx); lineDy.setAttribute('y2', svgQy);
+
+                textDx.setAttribute('x', svgPx + (svgQx - svgPx)/2 - 10);
+                textDx.setAttribute('y', svgPy + 20);
+                
+                textDy.setAttribute('x', svgQx + 10);
+                textDy.setAttribute('y', svgQy + (svgPy - svgQy)/2 + 5);
+
+                // គូរបន្ទាត់ខ្នាត់ PQ ពន្លាយ
+                let slope = (qY - pY) / (qX - pX);
+                let intercept = pY - slope * pX;
+                
+                let yAtXMin = slope * xMin + intercept;
+                let yAtXMax = slope * xMax + intercept;
+
+                secantLine.setAttribute('x1', mapX(xMin));
+                secantLine.setAttribute('y1', mapY(yAtXMin));
+                secantLine.setAttribute('x2', mapX(xMax));
+                secantLine.setAttribute('y2', mapY(yAtXMax));
+
+                // អាប់ដេតអត្ថបទ
+                let dy = qY - pY;
+                valDx.innerText = h.toFixed(2);
+                valDy.innerText = dy.toFixed(2);
+                valSlope.innerText = slope.toFixed(2);
+
+                // ប្តូរផ្ទាំងសារ
+                msgLimit.style.display = "none";
+                msgSliding.style.display = "block";
+                
+                if(h < 1.5) {
+                    statusBox.style.borderColor = "#f39c12";
+                    statusBox.style.backgroundColor = "#fef5e7";
+                } else {
+                    statusBox.style.borderColor = "#1abc9c";
+                    statusBox.style.backgroundColor = "#e8f8f5";
+                }
+            }
+        }
+
+        // ចាប់ផ្តើមស្តាប់ព្រឹត្តិការណ៍
+        slider.addEventListener('input', updateGraph);
+        updateGraph();
+    </script>
+</body>
+</html>
